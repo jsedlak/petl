@@ -1,4 +1,5 @@
 ﻿using Petl.Builder;
+using Petl.Converters;
 using Petl.Targets;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace Petl.Sources
             }
         }
 
-        public ICanAddTarget<TInput, TOutput> AddTarget(ProgrammableTarget<TInput, TOutput> target, System.Action<ICanAddConverter<TInput, TOutput>> configure = null)
+        public ICanAddTarget<TInput, TOutput> AddTarget(ProgrammableTarget<TInput, TOutput> target, System.Action<ICanAddConverter> configure = null)
         {
             if(configure != null)
             {

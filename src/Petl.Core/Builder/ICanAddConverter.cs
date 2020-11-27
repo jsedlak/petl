@@ -2,8 +2,8 @@
 
 namespace Petl.Builder
 {
-    public interface ICanAddConverter<TInput, TOutput>
+    public interface ICanAddConverter
     {
-        void AddConverter(IValueConverter valueConverter);
+        ICanAddConverter AddConverter(IValueConverter valueConverter);
     }
 }

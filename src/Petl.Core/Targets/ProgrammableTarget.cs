@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Petl.Targets
 {
-    public abstract class ProgrammableTarget<TInput, TOutput> : ICanAddConverter<TInput, TOutput>
+    public abstract class ProgrammableTarget<TInput, TOutput> : ICanAddConverter
     {
         public ProgrammableTarget()
             : this(new IValueConverter[] { })
@@ -29,9 +29,10 @@ namespace Petl.Targets
             SetValue(context, value);
         }
 
-        public void AddConverter(IValueConverter valueConverter)
+        public ICanAddConverter AddConverter(IValueConverter valueConverter)
         {
             Converters = Converters == null ? new[] { valueConverter } : Converters.Union(new[] { valueConverter });
+            return this;
         }
 
         public IEnumerable<IValueConverter> Converters { get; set; }

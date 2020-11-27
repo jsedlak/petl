@@ -32,11 +32,11 @@ namespace Petl
             options.Activator.Activate<TInput, TOutput>(context);
 
             // find the matching sets
-            var mathcingSets = _evalSets
+            var matchingSets = _evalSets
                 .Where(m => m is EvalSet<TInput, TOutput>)
                 .Select(m => m as EvalSet<TInput, TOutput>);
 
-            foreach (var set in mathcingSets)
+            foreach (var set in matchingSets)
             {
                 if (!set.CanHandle(input))
                 {
@@ -44,6 +44,7 @@ namespace Petl
                 }
 
                 set.Evaluate(context);
+                return context.Target;
             }
 
             return context.Target;

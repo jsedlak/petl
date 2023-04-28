@@ -11,7 +11,7 @@ namespace Petl.Sources
     {
         private IEnumerable<ProgrammableTarget<TInput, TOutput>> _targets;
 
-        public ProgrammableSource(IEnumerable<ProgrammableTarget<TInput, TOutput>> targets = null)
+        public ProgrammableSource(IEnumerable<ProgrammableTarget<TInput, TOutput>>? targets = null)
         {
             _targets = targets;
         }
@@ -27,7 +27,7 @@ namespace Petl.Sources
             }
         }
 
-        public ICanAddTarget<TInput, TOutput> AddTarget(ProgrammableTarget<TInput, TOutput> target, System.Action<ICanAddConverter> configure = null)
+        public ICanAddTarget<TInput, TOutput> AddTarget(ProgrammableTarget<TInput, TOutput> target, System.Action<ICanAddConverter>? configure = null)
         {
             if(configure != null)
             {

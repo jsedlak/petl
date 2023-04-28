@@ -9,7 +9,7 @@ namespace Petl.Sources
     {
         private readonly Expression<Func<TInput, object>> _expression;
 
-        public ExpressionProgrammableSource(Expression<Func<TInput, object>> expression, IEnumerable<ProgrammableTarget<TInput, TOutput>> targets = null)
+        public ExpressionProgrammableSource(Expression<Func<TInput, object>> expression, IEnumerable<ProgrammableTarget<TInput, TOutput>>? targets = null)
             : base(targets)
         {
             _expression = expression;

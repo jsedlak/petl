@@ -7,6 +7,6 @@ namespace Petl.Builder
     {
         ICanAddEvalSet WithActivator(IActivator activator);
 
-        ICanAddSource<TInput, TOutput> Map<TInput, TOutput>(Func<TInput, bool> canHandleCallback = null);
+        ICanAddSource<TInput, TOutput> Map<TInput, TOutput>(Func<TInput, bool>? canHandleCallback = null);
     }
 }

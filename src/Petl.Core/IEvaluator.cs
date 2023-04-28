@@ -2,6 +2,6 @@
 {
     public interface IEvaluator
     {
-        TOutput Evaluate<TInput, TOutput>(TInput input, EvalOptions options = null);
+        TOutput Evaluate<TInput, TOutput>(TInput input, EvalOptions? options = null);
     }
 }

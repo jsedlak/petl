@@ -15,7 +15,7 @@ namespace Petl.Builder
             return new Evaluator(_defaultActivator, _evalSets);
         }
 
-        public ICanAddSource<TInput, TOutput> Map<TInput, TOutput>(Func<TInput, bool> canHandleCallback = null)
+        public ICanAddSource<TInput, TOutput> Map<TInput, TOutput>(Func<TInput, bool>? canHandleCallback = null)
         {
             var evalSet = new EvalSet<TInput, TOutput>()
             {

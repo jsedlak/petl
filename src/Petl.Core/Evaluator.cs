@@ -16,7 +16,7 @@ namespace Petl
             _evalSets = evalSets;
         }
 
-        public TOutput Evaluate<TInput, TOutput>(TInput input, EvalOptions options = null)
+        public TOutput Evaluate<TInput, TOutput>(TInput input, EvalOptions? options = null)
         {
             options = options ?? new EvalOptions();
             options.Activator = options.Activator ?? _defaultActivator;

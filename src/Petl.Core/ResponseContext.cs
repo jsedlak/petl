@@ -1,6 +1,6 @@
 namespace Petl;
 
-public class EventContext 
+public class ResponseContext 
 {
     public Guid CorrelationId { get; set; }
 }

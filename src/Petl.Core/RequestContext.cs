@@ -1,6 +1,6 @@
 namespace Petl;
 
-public class CommandContext 
+public class RequestContext 
 {
     public Guid CorrelationId { get; set; } = Guid.NewGuid();
 

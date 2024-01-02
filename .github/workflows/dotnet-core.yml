@@ -4,19 +4,41 @@ on:
   workflow_dispatch: # Allow running the workflow manually from the GitHub UI
   push:
     branches: [ main ]
+    tags:
+      - '**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    
+    - name: Get next version
+      uses: reecetech/version-increment@2023.9.3
+      id: version
+      with:
+        scheme: semver
+        increment: patch
+
+    - name: Update versions
+      uses: jacobtomlinson/gha-find-replace@v3
+      with:
+        include: "*.csproj"
+        find: "1.0.0-beta"
+        replace: "${{ steps.version.outputs.version }}-beta"
+        regex: false
+
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
+
     - name: Install dependencies
       run: dotnet restore
+
     - name: Build
       run: dotnet build --configuration Release --no-restore
+
     - name: Publish Petl.Core
       uses: brandedoutcast/publish-nuget@v2.5.2
       with:

@@ -2,7 +2,7 @@
 
 namespace Petl.InMemory;
 
-public sealed class InMemoryResponseDispatcher : IResponseDispatcher
+public class InMemoryResponseDispatcher : IResponseDispatcher
 {
     private readonly IServiceProvider _serviceProvider;
 
@@ -15,6 +15,9 @@ public sealed class InMemoryResponseDispatcher : IResponseDispatcher
     {
         // create a service scope
         using var scope = _serviceProvider.CreateAsyncScope();
+
+        // allow for pre-dispatch processing
+        await PreDispatchAsync(responseContext, responses, scope.ServiceProvider, cancellationToken);
 
         foreach (var response in responses)
         {
@@ -31,5 +34,10 @@ public sealed class InMemoryResponseDispatcher : IResponseDispatcher
                 }
             }, cancellationToken);
         }
+    }
+
+    protected virtual Task PreDispatchAsync(ResponseContext responseContext, IEnumerable<IResponse> responses, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
     }
 }

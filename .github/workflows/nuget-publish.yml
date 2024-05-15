@@ -3,9 +3,8 @@ name: Publish Packages
 on:
   workflow_dispatch: # Allow running the workflow manually from the GitHub UI
   push:
-    branches: [ main ]
-    tags:
-      - '**'
+    branches:
+      - main
 
 jobs:
   build:
@@ -27,7 +26,7 @@ jobs:
       with:
         include: "*.csproj"
         find: "1.0.0-beta"
-        replace: "${{ steps.version.outputs.version }}-beta"
+        replace: "${{ steps.version.outputs.version }}"
         regex: false
 
     - name: Setup .NET Core

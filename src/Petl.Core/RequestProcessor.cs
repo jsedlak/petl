@@ -2,7 +2,7 @@
 
 namespace Petl;
 
-public sealed class RequestProcessor : IRequestProcessor
+public class RequestProcessor : IRequestProcessor
 {
     private readonly IServiceProvider _serviceProvider;
 
@@ -11,19 +11,16 @@ public sealed class RequestProcessor : IRequestProcessor
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<TResult> ProcessAsync<TRequest, TResult>(TRequest command, CancellationToken cancellationToken) 
+    public async Task<TResult> ProcessAsync<TRequest, TResult>(RequestContext context, TRequest command, CancellationToken cancellationToken)
         where TResult : IRequestResult
     {
-        // create the context
-        var context = new RequestContext();
-
         // create a service scope
         using var scope = _serviceProvider.CreateAsyncScope();
 
         // get the handler
         var handler = scope.ServiceProvider.GetService<IRequestHandler<TRequest, TResult>>();
 
-        if(handler == null)
+        if (handler == null)
         {
             throw new InvalidOperationException($"No handler found for request {typeof(TRequest).Name} and response {typeof(TResult).Name}");
         }
@@ -33,7 +30,12 @@ public sealed class RequestProcessor : IRequestProcessor
         // dispatch events if we have any
         if (result.Responses.Any())
         {
-            var responseContext = new ResponseContext { CorrelationId = context.CorrelationId };
+            // hydrate the response context from the original request context
+            var responseContext = new ResponseContext
+            {
+                CorrelationId = context.CorrelationId,
+                UserIdentfier = context.UserIdentifier
+            };
 
             var dispatchers = scope.ServiceProvider.GetServices<IResponseDispatcher>();
 
@@ -44,5 +46,14 @@ public sealed class RequestProcessor : IRequestProcessor
         }
 
         return result;
+    }
+
+    public Task<TResult> ProcessAsync<TRequest, TResult>(TRequest command, CancellationToken cancellationToken) 
+        where TResult : IRequestResult
+    {
+        // create the context
+        var context = new RequestContext();
+
+        return ProcessAsync<TRequest, TResult>(context, command, cancellationToken);
     }
 }

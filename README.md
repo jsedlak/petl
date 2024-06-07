@@ -17,6 +17,18 @@ services.AddPetl(builder => builder
 );
 ```
 
+Response Dispatchers may come in many flavors, and Response Handlers may associate themselves with a particular Dispatcher. This provides the ability to dispatch responses both locally and through a message bus without worrying about how the responses are processed.
+
+Unattributed response handlers are handled by the default (TODO) dispatcher.
+
+```csharp
+[ResponseDispatcher(typeof(InMemoryResponseDispatcher))]
+public sealed class AttributedResponseHandler : IResponseHandler<CountIncreasedResponse>
+{
+    // ...
+}
+```
+
 # Petl Event Sourcing
 
 An implementation of the mechanisms related to Event Sourcing. This is based on my interest in Orleans, though I may entertain the idea of other platforms, such as dapr.

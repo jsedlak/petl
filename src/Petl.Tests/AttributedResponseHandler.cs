@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Petl.InMemory;
+using Petl.Mediator;
+using Petl.Mediator.InMemory;
 
 namespace Petl.Tests;
 

@@ -1,4 +1,6 @@
-﻿namespace Petl.Tests;
+﻿using Petl.Mediator;
+
+namespace Petl.Tests;
 
 public class CountIncreasedResponse : IResponse
 {

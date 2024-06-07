@@ -1,6 +1,6 @@
-﻿using Petl.Fluent;
+﻿using Petl.Mediator.Fluent;
 
-namespace Petl.InMemory;
+namespace Petl.Mediator.InMemory;
 
 public static class InMemoryBuilderExtensions
 {

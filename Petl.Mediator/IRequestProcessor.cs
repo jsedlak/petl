@@ -1,4 +1,4 @@
-namespace Petl;
+namespace Petl.Mediator;
 
 /// <summary>
 /// Responsible for processing commands, dispatching the resulting events.

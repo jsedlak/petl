@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Petl.Fluent;
+using Petl.Mediator.Fluent;
 
-namespace Petl;
+namespace Petl.Mediator;
 
 public static class ServiceCollectionExtensions
 {

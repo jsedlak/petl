@@ -1,4 +1,4 @@
-namespace Petl;
+namespace Petl.Mediator;
 
 public interface IResponseHandler<TResponse> 
 {

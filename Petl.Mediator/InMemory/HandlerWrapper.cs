@@ -1,4 +1,4 @@
-﻿namespace Petl.InMemory;
+﻿namespace Petl.Mediator.InMemory;
 
 internal abstract class HandlerWrapper
 {

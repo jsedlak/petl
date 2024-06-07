@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+﻿using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Petl.InMemory;
+namespace Petl.Mediator.InMemory;
 
 internal class HandlerImplementation<TResponse> : HandlerWrapper where TResponse : IResponse
 {

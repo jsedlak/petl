@@ -1,4 +1,4 @@
-﻿namespace Petl;
+﻿namespace Petl.Mediator;
 
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class ResponseDispatcherAttribute : Attribute

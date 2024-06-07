@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Petl.InMemory;
+namespace Petl.Mediator.InMemory;
 
 public class InMemoryResponseDispatcher : IResponseDispatcher
 {

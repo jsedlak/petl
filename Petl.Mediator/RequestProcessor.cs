@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Petl;
+namespace Petl.Mediator;
 
 public class RequestProcessor : IRequestProcessor
 {

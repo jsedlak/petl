@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petl.EventSourcing.Orleans"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petl.EventSourcing.Providers.MongoDb", "src\Petl.EventSourcing.Providers.MongoDb\Petl.EventSourcing.Providers.MongoDb.csproj", "{BB8109B2-460C-4755-9019-2324AC6296EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petl.Mediator", "Petl.Mediator\Petl.Mediator.csproj", "{C524AB87-C621-4E3F-89E1-E8AC79E7ED16}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petl.Mediator", "src\Petl.Mediator\Petl.Mediator.csproj", "{C524AB87-C621-4E3F-89E1-E8AC79E7ED16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

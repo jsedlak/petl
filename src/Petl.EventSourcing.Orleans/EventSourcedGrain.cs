@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Orleans.Runtime;
 
 namespace Petl.EventSourcing;

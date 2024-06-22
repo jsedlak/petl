@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans;
 using Orleans.Runtime;
@@ -8,6 +9,8 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     where TGrainState : class, new()
     where TEventBase : class
 {
+    private IDisposable? _saveTimer;
+    private ISnapshotStrategy<TGrainState>? _snapshotStrategy;
     private IEventLog<TGrainState, TEventBase> _eventLog = null!;
     
     public virtual void Participate(IGrainLifecycle lifecycle)
@@ -45,6 +48,11 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     {
         return _eventLog.Snapshot(truncate);
     }
+    
+    protected virtual Task OnSaveTimerTicked(object arg)
+    {
+        return Task.CompletedTask;
+    }
     #endregion
 
     #region Service Setup / TearDown
@@ -63,8 +71,16 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
             return Task.CompletedTask;
         }
         
+        // grab the event log factory and build the log service
         var factory = ServiceProvider.GetRequiredService<IEventLogFactory>();
         _eventLog = factory.Create<TGrainState, TEventBase>(GetType(), this.GetGrainId().ToString());
+
+        // attempt to grab a snapshot strategy
+        var snapshotFactory = ServiceProvider.GetService<ISnapshotStrategyFactory>();
+        if (snapshotFactory != null)
+        {
+            _snapshotStrategy = snapshotFactory.Create<TGrainState>(GetType(), this.GetGrainId().ToString());
+        }
         
         return Task.CompletedTask;
     }
@@ -82,19 +98,30 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
         }
 
         await _eventLog.Hydrate();
+
+        var timer = GetType().GetCustomAttribute<PersistTimerAttribute>()?.Time ??
+                        PersistTimerAttribute.DefaultTime;
+
+        _saveTimer = RegisterTimer(OnSaveTimerTicked, null, timer, timer);
     }
 
     /// <summary>
     /// Called when the grain is deactivating
     /// </summary>
-    private Task OnDestroyState(CancellationToken token)
+    private async Task OnDestroyState(CancellationToken token)
     {
         if (token.IsCancellationRequested)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        return _eventLog.WaitForConfirmation();
+        await _eventLog.WaitForConfirmation();
+
+        if (_saveTimer is not null)
+        {
+            _saveTimer.Dispose();
+            _saveTimer = null;
+        }
     }
     #endregion
 

@@ -10,6 +10,7 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     where TEventBase : class
 {
     private IDisposable? _saveTimer;
+    private bool _saveOnRaise = false;
     private ISnapshotStrategy<TGrainState>? _snapshotStrategy;
     private IEventLog<TGrainState, TEventBase> _eventLog = null!;
     
@@ -29,14 +30,18 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     }
     
     #region Interaction
-    protected virtual void Raise(TEventBase @event)
+    protected virtual Task Raise(TEventBase @event)
     {
         _eventLog.Submit(@event);
+
+        return _saveOnRaise ? _eventLog.WaitForConfirmation() : Task.CompletedTask;
     }
 
-    protected virtual void Raise(IEnumerable<TEventBase> events)
+    protected virtual Task Raise(IEnumerable<TEventBase> events)
     {
         _eventLog.Submit(events);
+        
+        return _saveOnRaise ? _eventLog.WaitForConfirmation() : Task.CompletedTask;
     }
 
     protected Task WaitForConfirmation()
@@ -49,9 +54,19 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
         return _eventLog.Snapshot(truncate);
     }
     
-    protected virtual Task OnSaveTimerTicked(object arg)
+    protected virtual async Task OnSaveTimerTicked(object arg)
     {
-        return Task.CompletedTask;
+        if (_snapshotStrategy is not null)
+        {
+            var snapshotResult = await _snapshotStrategy.ShouldSnapshot(State, Version);
+
+            if (snapshotResult.shouldSnapshot)
+            {
+                await _eventLog.Snapshot(snapshotResult.shouldTruncate);
+            }
+        }
+        
+        await _eventLog.WaitForConfirmation();
     }
     #endregion
 
@@ -102,7 +117,13 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
         var timer = GetType().GetCustomAttribute<PersistTimerAttribute>()?.Time ??
                         PersistTimerAttribute.DefaultTime;
 
-        _saveTimer = RegisterTimer(OnSaveTimerTicked, null, timer, timer);
+        if (timer.Equals(TimeSpan.Zero))
+        {
+            _saveOnRaise = true;
+        }
+        else {
+            _saveTimer = RegisterTimer(OnSaveTimerTicked, null, timer, timer);
+        }
     }
 
     /// <summary>

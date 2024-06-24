@@ -2,7 +2,7 @@
 using Petl.Mediator;
 using Petl.Mediator.InMemory;
 
-namespace Petl.Tests;
+namespace Petl.Tests.MediatorTests;
 
 [ResponseDispatcher(typeof(InMemoryResponseDispatcher))]
 public sealed class AttributedResponseHandler : IResponseHandler<CountIncreasedResponse>

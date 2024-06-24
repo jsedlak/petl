@@ -1,4 +1,4 @@
-﻿namespace Petl.Tests;
+﻿namespace Petl.Tests.MediatorTests;
 
 public class TestRequest
 {

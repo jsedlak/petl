@@ -2,7 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Petl.Mediator;
 using Petl.Mediator.InMemory;
 
-namespace Petl.Tests;
+namespace Petl.Tests.MediatorTests;
 
 [TestClass]
 public class TestDependencyInjection
@@ -35,13 +35,4 @@ public class TestDependencyInjection
         Assert.IsTrue((bool)tracker.UnattributedHandlerInvoked);
         Assert.IsFalse((bool)tracker.IncorrectlyAttributedHandlerInvoked);
     }
-}
-
-public sealed class TestTracker
-{
-    public bool AttributedHandlerInvoked { get; set; }
-
-    public bool UnattributedHandlerInvoked { get; set; }
-
-    public bool IncorrectlyAttributedHandlerInvoked { get; set; }
 }

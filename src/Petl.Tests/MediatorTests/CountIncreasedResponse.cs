@@ -1,6 +1,6 @@
 ﻿using Petl.Mediator;
 
-namespace Petl.Tests;
+namespace Petl.Tests.MediatorTests;
 
 public class CountIncreasedResponse : IResponse
 {

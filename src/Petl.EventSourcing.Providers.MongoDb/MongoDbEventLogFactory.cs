@@ -54,12 +54,3 @@ public class MongoDbEventLogFactory : IEventLogFactory
         return new MongoDbEventLog<TView, TEntry>(settings, mongoClient, eventSerializer, logger);
     }
 }
-
-public static class ServiceExtensions
-{
-    public static void AddMongoEventSourcing(this IServiceCollection services, string databaseName)
-    {
-        services.AddScoped<MongoDbFactorySettings>(sp => new MongoDbFactorySettings { DatabaseName = databaseName });
-        services.AddScoped<IEventLogFactory, MongoDbEventLogFactory>();
-    }
-}

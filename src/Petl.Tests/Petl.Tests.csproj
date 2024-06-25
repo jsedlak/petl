@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
     <PackageReference Include="Microsoft.Orleans.Client" Version="8.1.0" />
+    <PackageReference Include="Microsoft.Orleans.Reminders" Version="8.1.0" />
     <PackageReference Include="Microsoft.Orleans.Sdk" Version="8.1.0" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="8.1.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.0.4" />
@@ -21,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Petl.EventSourcing.Orleans\Petl.EventSourcing.Orleans.csproj" />
     <ProjectReference Include="..\Petl.Mediator\Petl.Mediator.csproj" />
   </ItemGroup>
 

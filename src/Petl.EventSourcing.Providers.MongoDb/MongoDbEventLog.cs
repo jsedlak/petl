@@ -1,7 +1,5 @@
-using System.Collections.Immutable;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using ZstdSharp.Unsafe;
 
 namespace Petl.EventSourcing.Providers;
 

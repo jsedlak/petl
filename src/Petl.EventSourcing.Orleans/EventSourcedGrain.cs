@@ -55,6 +55,10 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     
     protected virtual async Task OnSaveTimerTicked(object arg)
     {
+        // ensure all events are persisted
+        await _eventLog.WaitForConfirmation();
+        
+        // check if we need to snapshot and truncate the log
         if (_snapshotStrategy is not null)
         {
             var snapshotResult = await _snapshotStrategy.ShouldSnapshot(State, Version);
@@ -64,8 +68,6 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
                 await _eventLog.Snapshot(snapshotResult.shouldTruncate);
             }
         }
-        
-        await _eventLog.WaitForConfirmation();
     }
     #endregion
 

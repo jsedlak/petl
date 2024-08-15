@@ -15,8 +15,8 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
     private IEnumerable<EventLogEntry<byte[]>> _events = [];
     private readonly Queue<EventLogEntry<byte[]>> _eventQueue = new();
 
-    private readonly TView _state = new();
-    private readonly TView _tentativeState = new();
+    private TView _state = new();
+    private TView _tentativeState = new();
 
     private int _tentativeVersion = 0;
     private int _confirmedVersion = 0;
@@ -67,13 +67,23 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
         }
     }
     
-    public Task Hydrate()
+    public async Task Hydrate()
     {
+        var snapshotDb = _client.GetDatabase(SnapshotDatabaseName);
+        var snapshotCol = snapshotDb.GetCollection<Snapshot<TView>>(_settings.GrainType);
+        
         var db = _client.GetDatabase(EventDatabaseName);
         var col = db.GetCollection<EventLogEntry<byte[]>>(_settings.GrainType);
         
         // TODO: Look for a snapshot. If it exists, we load that directly
         // TODO: If there is a snapshot, we need to do a delta from snapshot version to log tail
+        var snapshot = (await snapshotCol.FindAsync(m => m.GrainId == _settings.GrainId)).FirstOrDefault();
+
+        if (snapshot is not null)
+        {
+            _state = _tentativeState = snapshot.View;
+            _confirmedVersion = _tentativeVersion = snapshot.Version;
+        }
 
         _events = col.AsQueryable()
             .Where(m => m.GrainId == _settings.GrainId)
@@ -88,8 +98,6 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
             ApplyConfirmed(@event);
             _tentativeVersion = _confirmedVersion = ev.Version;
         }
-
-        return Task.CompletedTask;
     }
 
     public void Submit(TEvent entry)
@@ -114,9 +122,31 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
         }
     }
 
-    public Task Snapshot(bool truncate)
+    public async Task Snapshot(bool truncate)
     {
-        return Task.CompletedTask;
+        var db = _client.GetDatabase(EventDatabaseName);
+        var col = db.GetCollection<Snapshot<TView>>(_settings.GrainType);
+
+        await col.FindOneAndReplaceAsync<Snapshot<TView>>(
+            m => m.GrainId == _settings.GrainId, 
+            new Snapshot<TView>
+            {
+                Id = Guid.NewGuid(), // TODO: We need a better way to handle this - do we pass Grain Identity type down?
+                GrainId = _settings.GrainId,
+                View = ConfirmedView,
+                Version = ConfirmedVersion
+            }, 
+            new FindOneAndReplaceOptions<Snapshot<TView>> { IsUpsert = true }
+        );
+
+        if (truncate)
+        {
+            var logDb = _client.GetDatabase(SnapshotDatabaseName);
+            var logCol = db.GetCollection<EventLogEntry<byte[]>>(_settings.GrainType);
+
+            // TODO: Validate if it's that easy...
+            await logCol.DeleteManyAsync(m => m.GrainId == _settings.GrainId && m.Version < ConfirmedVersion);
+        }
     }
 
     public Task WaitForConfirmation()

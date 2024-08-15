@@ -1,4 +1,4 @@
-namespace Petl.EventSourcing;
+namespace Petl.EventSourcing.Snapshotting;
 
 public interface ISnapshotStrategy<TView> 
     where TView : class, new()

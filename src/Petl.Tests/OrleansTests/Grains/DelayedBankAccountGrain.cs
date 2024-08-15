@@ -1,4 +1,3 @@
-using Orleans;
 using Petl.EventSourcing;
 using Petl.Tests.OrleansTests.Commands;
 using Petl.Tests.OrleansTests.Events;
@@ -6,7 +5,8 @@ using Petl.Tests.OrleansTests.Model;
 
 namespace Petl.Tests.OrleansTests.Grains;
 
-public class BankAccountGrain : EventSourcedGrain<BankAccount, BankAccountEventBase>, IBankAccountGrain
+[PersistTimer(30*1000)]
+public class DelayedBankAccountGrain : EventSourcedGrain<BankAccount, BankAccountEventBase>, IDelayedBankAccountGrain
 {
     public ValueTask<double> Deposit(DepositCommand command)
     {
@@ -39,5 +39,3 @@ public class BankAccountGrain : EventSourcedGrain<BankAccount, BankAccountEventB
         return ValueTask.FromResult(State.Balance);
     }
 }
-
-// thirty seconds

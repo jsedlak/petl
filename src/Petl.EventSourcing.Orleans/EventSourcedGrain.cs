@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
+using Petl.EventSourcing.Snapshotting;
 
 namespace Petl.EventSourcing;
 

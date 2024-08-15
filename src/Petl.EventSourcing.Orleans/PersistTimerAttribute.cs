@@ -6,15 +6,15 @@ public class PersistTimerAttribute : Attribute
     public static readonly TimeSpan DefaultTime = TimeSpan.FromSeconds(15);
 
     public PersistTimerAttribute()
-        : this(DefaultTime)
+        : this(DefaultTime.Seconds)
     {
 
     }
     
 
-    public PersistTimerAttribute(TimeSpan time)
+    public PersistTimerAttribute(int timeInSeconds)
     {
-        Time = time;
+        Time = TimeSpan.FromSeconds(timeInSeconds);
     }
     
     public TimeSpan Time { get; set; }

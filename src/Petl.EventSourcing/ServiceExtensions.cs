@@ -6,6 +6,6 @@ public static class ServiceExtensions
 {
     public static void AddMemoryEventSourcing(this IServiceCollection services)
     {
-        services.AddScoped<IEventLogFactory, MemoryEventLogFactory>();
+        services.AddScoped<IEventLogFactory, InMemoryEventLogFactory>();
     }
 }

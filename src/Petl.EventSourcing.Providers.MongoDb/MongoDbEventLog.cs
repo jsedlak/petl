@@ -10,6 +10,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
     private readonly MongoDbEventLogSettings _settings;
     private readonly IMongoClient _client;
     private readonly IEventSerializer _eventSerializer;
+    private readonly IStateSerializer _stateSerializer;
     private readonly ILogger<MongoDbEventLog<TView, TEvent>> _logger;
 
     private IEnumerable<EventLogEntry<byte[]>> _events = [];
@@ -18,18 +19,20 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
     private TView _state = new();
     private TView _tentativeState = new();
 
-    private int _tentativeVersion = 0;
-    private int _confirmedVersion = 0;
+    private int _tentativeConfirmedVersion = 0;
+    private int _confirmedConfirmedVersion = 0;
     
     public MongoDbEventLog(
         MongoDbEventLogSettings settings, 
         IMongoClient client,
         IEventSerializer eventSerializer,
+        IStateSerializer stateSerializer,
         ILogger<MongoDbEventLog<TView, TEvent>> logger)
     {
         _settings = settings;
         _client = client;
         _eventSerializer = eventSerializer;
+        _stateSerializer = stateSerializer;
         _logger = logger;
     }
     
@@ -45,6 +48,12 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
         dynamic e = @event;
         dynamic s = _state;
         s.Apply(e);
+    }
+    
+    private TView DeepCopy(TView input)
+    {
+        var result = _stateSerializer.Serialize(input);
+        return _stateSerializer.Deserialize<TView>(result.ToArray());
     }
 
     private async Task SaveQueueToStorage()
@@ -63,7 +72,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
             ApplyConfirmed(@event);
             
             // this is fishy....
-            _confirmedVersion = Math.Max(eventRecord.Version, _confirmedVersion);
+            _confirmedConfirmedVersion = Math.Max(eventRecord.Version, _confirmedConfirmedVersion);
         }
     }
     
@@ -81,8 +90,9 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
 
         if (snapshot is not null)
         {
-            _state = _tentativeState = snapshot.View;
-            _confirmedVersion = _tentativeVersion = snapshot.Version;
+            _tentativeState = snapshot.View;
+            _state = DeepCopy(_tentativeState);
+            _confirmedConfirmedVersion = _tentativeConfirmedVersion = snapshot.Version;
         }
 
         _events = col.AsQueryable()
@@ -96,7 +106,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
             TEvent @event = _eventSerializer.Deserialize<TEvent>(ev.Data);
             ApplyTentative(@event);
             ApplyConfirmed(@event);
-            _tentativeVersion = _confirmedVersion = ev.Version;
+            _tentativeConfirmedVersion = _confirmedConfirmedVersion = ev.Version;
         }
     }
 
@@ -109,7 +119,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
                 Guid.NewGuid(), 
                 _settings.GrainId,
                 _eventSerializer.Serialize(entry).ToArray(), 
-                ++_tentativeVersion
+                ++_tentativeConfirmedVersion
             )
         );
     }
@@ -134,7 +144,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
                 Id = Guid.NewGuid(), // TODO: We need a better way to handle this - do we pass Grain Identity type down?
                 GrainId = _settings.GrainId,
                 View = ConfirmedView,
-                Version = ConfirmedVersion
+                Version = ConfirmedConfirmedVersion
             }, 
             new FindOneAndReplaceOptions<Snapshot<TView>> { IsUpsert = true }
         );
@@ -145,7 +155,7 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
             var logCol = db.GetCollection<EventLogEntry<byte[]>>(_settings.GrainType);
 
             // TODO: Validate if it's that easy...
-            await logCol.DeleteManyAsync(m => m.GrainId == _settings.GrainId && m.Version < ConfirmedVersion);
+            await logCol.DeleteManyAsync(m => m.GrainId == _settings.GrainId && m.Version < ConfirmedConfirmedVersion);
         }
     }
 
@@ -158,9 +168,9 @@ public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
 
     public TView ConfirmedView => _state;
     
-    public int ConfirmedVersion => _confirmedVersion;
+    public int ConfirmedConfirmedVersion => _confirmedConfirmedVersion;
 
-    public int TentativeVersion => _tentativeVersion;
+    public int TentativeConfirmedVersion => _tentativeConfirmedVersion;
 
     private string EventDatabaseName => $"{_settings.DatabaseName}-events";
 

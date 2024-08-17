@@ -7,7 +7,7 @@ public class DefaultSiloConfigurator : ISiloConfigurator
 {
     public virtual void Configure(ISiloBuilder siloBuilder)
     {
-        siloBuilder.Services.AddOrleansEventSerializer();
+        siloBuilder.Services.AddOrleansSerializers();
         siloBuilder.Services.AddMemoryEventSourcing();
         siloBuilder.UseInMemoryReminderService();
     }

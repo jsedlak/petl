@@ -29,6 +29,7 @@ public class MongoDbEventLogFactory : IEventLogFactory
         // grab some services
         var mongoClient = _serviceProvider.GetRequiredService<IMongoClient>();
         var eventSerializer = _serviceProvider.GetRequiredService<IEventSerializer>();
+        var stateSerializer = _serviceProvider.GetRequiredService<IStateSerializer>();
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger<MongoDbEventLog<TView, TEntry>>();
         
@@ -51,6 +52,6 @@ public class MongoDbEventLogFactory : IEventLogFactory
             GrainId = grainId
         };
 
-        return new MongoDbEventLog<TView, TEntry>(settings, mongoClient, eventSerializer, logger);
+        return new MongoDbEventLog<TView, TEntry>(settings, mongoClient, eventSerializer, stateSerializer, logger);
     }
 }

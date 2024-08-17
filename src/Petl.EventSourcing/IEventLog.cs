@@ -21,9 +21,9 @@ public interface IEventLog<TView, TEntry>
     
     TView ConfirmedView { get; }
     
-    int ConfirmedVersion { get; }
+    int ConfirmedConfirmedVersion { get; }
     
-    int TentativeVersion { get; }
+    int TentativeConfirmedVersion { get; }
     
     // IEnumerable<TEntry> UnconfirmedTail { get; }
 }

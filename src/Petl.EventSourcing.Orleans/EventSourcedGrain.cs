@@ -62,7 +62,7 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
         // check if we need to snapshot and truncate the log
         if (_snapshotStrategy is not null)
         {
-            var snapshotResult = await _snapshotStrategy.ShouldSnapshot(State, Version);
+            var snapshotResult = await _snapshotStrategy.ShouldSnapshot(ConfirmedState, ConfirmedVersion);
 
             if (snapshotResult.shouldSnapshot)
             {
@@ -148,7 +148,11 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     }
     #endregion
 
-    protected TGrainState State => _eventLog.ConfirmedView;
+    protected TGrainState TentativeState => _eventLog.TentativeView;
 
-    protected int Version => _eventLog.ConfirmedVersion;
+    protected int TentativeVersion => _eventLog.TentativeVersion;
+
+    protected TGrainState ConfirmedState => _eventLog.ConfirmedView;
+
+    protected int ConfirmedVersion => _eventLog.ConfirmedVersion;
 }

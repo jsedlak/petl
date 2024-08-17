@@ -15,15 +15,15 @@ public class BankAccountGrain : EventSourcedGrain<BankAccount, BankAccountEventB
             Amount = command.Amount
         });
 
-        return ValueTask.FromResult(State.Balance);
+        return ValueTask.FromResult(TentativeState.Balance);
     }
 
     public ValueTask<double> Withdraw(WithdrawCommand command)
     {
         var amount = command.Amount;
-        if (amount > State.Balance)
+        if (amount > TentativeState.Balance)
         {
-            amount = State.Balance;
+            amount = TentativeState.Balance;
         }
 
         Raise(new AmountWithdrawnEvent(this.GetPrimaryKey())
@@ -31,12 +31,12 @@ public class BankAccountGrain : EventSourcedGrain<BankAccount, BankAccountEventB
             Amount = amount
         });
         
-        return ValueTask.FromResult(State.Balance);
+        return ValueTask.FromResult(TentativeState.Balance);
     }
 
     public ValueTask<double> GetBalance()
     {
-        return ValueTask.FromResult(State.Balance);
+        return ValueTask.FromResult(TentativeState.Balance);
     }
 }
 

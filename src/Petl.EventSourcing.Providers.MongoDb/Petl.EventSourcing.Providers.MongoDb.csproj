@@ -5,6 +5,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Petl.EventSourcing.Providers</RootNamespace>
+        <Authors>John Sedlak</Authors>
+        <Description>Provides MongoDb Event Log implementation for the Petl Event Sourcing library.      </Description>
+        <PackageProjectUrl>https://github.com/jsedlak/petl</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/jsedlak/petl</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>

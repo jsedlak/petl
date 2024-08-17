@@ -1,6 +1,7 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using Orleans;
 using Orleans.Runtime;
+using Petl.EventSourcing.Snapshotting;
 
 namespace Petl.EventSourcing;
 
@@ -8,6 +9,9 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     where TGrainState : class, new()
     where TEventBase : class
 {
+    private IDisposable? _saveTimer;
+    private bool _saveOnRaise = false;
+    private ISnapshotStrategy<TGrainState>? _snapshotStrategy;
     private IEventLog<TGrainState, TEventBase> _eventLog = null!;
     
     public virtual void Participate(IGrainLifecycle lifecycle)
@@ -26,14 +30,18 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     }
     
     #region Interaction
-    protected virtual void Raise(TEventBase @event)
+    protected virtual Task Raise(TEventBase @event)
     {
         _eventLog.Submit(@event);
+
+        return _saveOnRaise ? _eventLog.WaitForConfirmation() : Task.CompletedTask;
     }
 
-    protected virtual void Raise(IEnumerable<TEventBase> events)
+    protected virtual Task Raise(IEnumerable<TEventBase> events)
     {
         _eventLog.Submit(events);
+        
+        return _saveOnRaise ? _eventLog.WaitForConfirmation() : Task.CompletedTask;
     }
 
     protected Task WaitForConfirmation()
@@ -44,6 +52,23 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
     protected Task Snapshot(bool truncate)
     {
         return _eventLog.Snapshot(truncate);
+    }
+    
+    protected virtual async Task OnSaveTimerTicked(object arg)
+    {
+        // ensure all events are persisted
+        await _eventLog.WaitForConfirmation();
+        
+        // check if we need to snapshot and truncate the log
+        if (_snapshotStrategy is not null)
+        {
+            var snapshotResult = await _snapshotStrategy.ShouldSnapshot(ConfirmedState, ConfirmedVersion);
+
+            if (snapshotResult.shouldSnapshot)
+            {
+                await _eventLog.Snapshot(snapshotResult.shouldTruncate);
+            }
+        }
     }
     #endregion
 
@@ -63,8 +88,16 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
             return Task.CompletedTask;
         }
         
+        // grab the event log factory and build the log service
         var factory = ServiceProvider.GetRequiredService<IEventLogFactory>();
         _eventLog = factory.Create<TGrainState, TEventBase>(GetType(), this.GetGrainId().ToString());
+
+        // attempt to grab a snapshot strategy
+        var snapshotFactory = ServiceProvider.GetService<ISnapshotStrategyFactory>();
+        if (snapshotFactory != null)
+        {
+            _snapshotStrategy = snapshotFactory.Create<TGrainState>(GetType(), this.GetGrainId().ToString());
+        }
         
         return Task.CompletedTask;
     }
@@ -82,23 +115,44 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
         }
 
         await _eventLog.Hydrate();
+
+        var timer = GetType().GetCustomAttribute<PersistTimerAttribute>()?.Time ??
+                        PersistTimerAttribute.DefaultTime;
+
+        if (timer.Equals(TimeSpan.Zero))
+        {
+            _saveOnRaise = true;
+        }
+        else {
+            _saveTimer = RegisterTimer(OnSaveTimerTicked, null, timer, timer);
+        }
     }
 
     /// <summary>
     /// Called when the grain is deactivating
     /// </summary>
-    private Task OnDestroyState(CancellationToken token)
+    private async Task OnDestroyState(CancellationToken token)
     {
         if (token.IsCancellationRequested)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        return _eventLog.WaitForConfirmation();
+        await _eventLog.WaitForConfirmation();
+
+        if (_saveTimer is not null)
+        {
+            _saveTimer.Dispose();
+            _saveTimer = null;
+        }
     }
     #endregion
 
-    protected TGrainState State => _eventLog.ConfirmedView;
+    protected TGrainState TentativeState => _eventLog.TentativeView;
 
-    protected int Version => _eventLog.ConfirmedVersion;
+    protected int TentativeVersion => _eventLog.TentativeVersion;
+
+    protected TGrainState ConfirmedState => _eventLog.ConfirmedView;
+
+    protected int ConfirmedVersion => _eventLog.ConfirmedVersion;
 }

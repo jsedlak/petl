@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Petl.Mediator;
 
-namespace Petl.Tests;
+namespace Petl.Tests.MediatorTests;
 
 public sealed class UnattributedResponseHandler : IResponseHandler<CountIncreasedResponse>
 {

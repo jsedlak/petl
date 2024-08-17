@@ -17,11 +17,13 @@ public interface IEventLog<TView, TEntry>
 
     Task WaitForConfirmation();
     
-    // TView TentativeView { get; }
+    TView TentativeView { get; }
     
     TView ConfirmedView { get; }
     
     int ConfirmedVersion { get; }
+    
+    int TentativeVersion { get; }
     
     // IEnumerable<TEntry> UnconfirmedTail { get; }
 }

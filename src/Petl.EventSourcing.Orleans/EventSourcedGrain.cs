@@ -150,5 +150,5 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
 
     protected TGrainState State => _eventLog.ConfirmedView;
 
-    protected int Version => _eventLog.ConfirmedConfirmedVersion;
+    protected int Version => _eventLog.ConfirmedVersion;
 }

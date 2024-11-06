@@ -5,9 +5,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Authors>John Sedlak</Authors>
+
+        <AssemblyTitle>Petl.EventSourcing</AssemblyTitle>
+        <AssemblyName>Petl.EventSourcing</AssemblyName>
         <Description>Provides base code for supporting the Petl Event Sourcing mechanisms</Description>
+        <PackageId>Petl.EventSourcing</PackageId>
+        <PackageTags>event sourcing;cqrs</PackageTags>
         <PackageProjectUrl>https://github.com/jsedlak/petl</PackageProjectUrl>
         <RepositoryUrl>https://github.com/jsedlak/petl</RepositoryUrl>
+        <Version>1.0.0-beta</Version>
     </PropertyGroup>
 
     <ItemGroup>

@@ -6,9 +6,15 @@
         <Nullable>enable</Nullable>
         <RootNamespace>Petl.EventSourcing.Providers</RootNamespace>
         <Authors>John Sedlak</Authors>
-        <Description>Provides MongoDb Event Log implementation for the Petl Event Sourcing library.      </Description>
+        
+        <AssemblyTitle>Petl.EventSourcing.Providers.MongoDb</AssemblyTitle>
+        <AssemblyName>Petl.EventSourcing.Providers.MongoDb</AssemblyName>
+        <Description>Provides MongoDb Event Log implementation for the Petl Event Sourcing library.</Description>
+        <PackageId>Petl.EventSourcing.Providers.MongoDb</PackageId>
+        <PackageTags>mongodb;cqrs;event sourcing</PackageTags>
         <PackageProjectUrl>https://github.com/jsedlak/petl</PackageProjectUrl>
         <RepositoryUrl>https://github.com/jsedlak/petl</RepositoryUrl>
+        <Version>1.0.0-beta</Version>
     </PropertyGroup>
 
     <ItemGroup>

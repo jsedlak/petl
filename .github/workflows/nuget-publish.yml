@@ -11,47 +11,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v2
-    
-    - name: Get next version
-      uses: reecetech/version-increment@2023.9.3
-      id: version
-      with:
-        scheme: semver
-        increment: patch
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-    - name: Update versions
-      uses: jacobtomlinson/gha-find-replace@v3
-      with:
-        include: "*.csproj"
-        find: "1.0.0-beta"
-        replace: "${{ steps.version.outputs.version }}"
-        regex: false
+      - name: Get next version
+        uses: reecetech/version-increment@2023.9.3
+        id: version
+        with:
+          scheme: semver
+          increment: patch
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+      - name: Update versions
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          include: "*.csproj"
+          find: "1.0.0-beta"
+          replace: "${{ steps.version.outputs.version }}"
+          regex: false
 
-    - name: Install dependencies
-      run: dotnet restore
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+      - name: Install dependencies
+        run: dotnet restore
 
-    - name: Publish Petl.EventSourcing
-      uses: brandedoutcast/publish-nuget@v2.5.2
-      with:
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish Petl.EventSourcing
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
           PROJECT_FILE_PATH: src/Petl.EventSourcing/Petl.EventSourcing.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
 
-    - name: Publish Petl.EventSourcing.Orleans
-      uses: brandedoutcast/publish-nuget@v2.5.2
-      with:
-        PROJECT_FILE_PATH: src/Petl.EventSourcing.Orleans/Petl.EventSourcing.Orleans.csproj
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+      - name: Publish Petl.EventSourcing.Orleans
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
+          PROJECT_FILE_PATH: src/Petl.EventSourcing.Orleans/Petl.EventSourcing.Orleans.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
 
-    - name: Publish Petl.EventSourcing.Providers.MongoDb
-      uses: brandedoutcast/publish-nuget@v2.5.2
-      with:
-        PROJECT_FILE_PATH: src/Petl.EventSourcing.Providers.MongoDb/Petl.EventSourcing.Providers.MongoDb.csproj
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+      - name: Publish Petl.EventSourcing.Providers.MongoDb
+        uses: brandedoutcast/publish-nuget@v2.5.2
+        with:
+          PROJECT_FILE_PATH: src/Petl.EventSourcing.Providers.MongoDb/Petl.EventSourcing.Providers.MongoDb.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}

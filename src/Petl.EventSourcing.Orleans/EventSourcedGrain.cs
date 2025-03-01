@@ -124,7 +124,7 @@ public abstract class EventSourcedGrain<TGrainState, TEventBase> : Grain, ILifec
             _saveOnRaise = true;
         }
         else {
-            _saveTimer = RegisterTimer(OnSaveTimerTicked, new object(), timer, timer);
+            _saveTimer = this.RegisterGrainTimer(OnSaveTimerTicked, new object(), timer, timer);
         }
     }
 

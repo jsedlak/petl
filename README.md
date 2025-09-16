@@ -1,75 +1,83 @@
 # Petl
 
-Petl is an Event Sourcing framework built to support CQRS architectures, specifically on Microsoft Orleans.
+A Programmable ETL (Extract, Transform, Load) Library designed around using a fluent interface to transform data from inputs to outputs.
 
-The `Petl.EventSourcing` library provides the base interfaces for implementing contracts related to Event Sourcing, such that developers may create provider specific implementations, such as `Petl.EventSourcing.Providers.MongoDb`
+## Features
 
-The `Petl.EventSourcing.Orleans` library offers an `EventSourcedGrain` that supports (will support) common scenarios related to Event Sourcing. 
+- **Fluent Interface**: Easy-to-use builder pattern for creating transformation pipelines
+- **Property Transformations**: Simple type-to-type data copying between properties
+- **Custom Transformations**: Support for custom transformation logic with callback handlers
+- **Pipeline Steps**: Organize transformations into logical steps
+- **Type Safety**: Full generic type support for compile-time safety
+
+## Quick Start
 
 ```csharp
-public sealed class AccountGrain : 
-    EventSourcedGrain<BankAccount, BankAccountBaseEvent>,
-    IAccountGrain
+using Petl;
+
+// Define your input and output models
+public class InputModel
 {
-    public ValueTask<bool> Withdraw(double amount)
-    {
-        if (amount > State.Balance)
-        {
-            return ValueTask.FromResult(false);
-        }
-
-        Raise(new AmountWithdrawn { Amount = amount });
-
-        return ValueTask.FromResult(true);
-    }
+    public string SourceProperty { get; set; } = string.Empty;
+    public int SomeProperty { get; set; }
 }
-```
 
-Event and State are managed through a single interface, `IEventLog<TView, TEntry>`. The goal is to support the possibility to truncate the event log by snapshotting the view.
-
-```csharp
-public interface IEventLog<TView, TEntry>
-    where TView : class, new()
-    where TEntry : class
+public class OutputModel
 {
-    // ...
+    public string TargetProperty { get; set; } = string.Empty;
+    public string SomeProperty { get; set; } = string.Empty;
 }
-```
 
-An instance of the event log is associated with every `EventSourcedGrain`, providing a window into the underlying data. The event log may load a snapshot and/or events to hydrate and maintain the state of the grain's data.
+// Create a transformation pipeline
+var builder = new PipelineBuilder<InputModel, OutputModel>();
 
-A MongoDB implementation is being provided with Petl.
+builder
+    .WithStep("Simple Transform")
+        .Property(
+            x => x.SourceProperty,
+            y => y.TargetProperty
+        )
+        .Transform((source, target) => {
+            target.SomeProperty = source.SomeProperty.ToString();
+        });
 
-```csharp
-public class MongoDbEventLog<TView, TEvent> : IEventLog<TView, TEvent>
-    where TView : class, new()
-    where TEvent : class
+var pipeline = builder.Build();
+
+// Execute the transformation
+var myInput = new InputModel
 {
-    // ...
-}
+    SourceProperty = "Hello World",
+    SomeProperty = 42
+};
+var myOutput = new OutputModel();
+
+pipeline.Exec(myInput, myOutput);
 ```
 
-To use the MongoDB provider, reference the appropriate libraries and configure the services in your `Program.cs`
+## API Reference
 
-```csharp
-await Host.CreateDefaultBuilder(args)
-    .UseOrleans(silo =>
-    {
-        silo
-            .ConfigureServices((services) =>
-            {
-                // configure the grain storage serializer as the event serializer
-                services.AddOrleansEventSerializer();
-                
-                // add the mongo event log
-                services.AddMongoEventSourcing("your-database");
-            })
-            .UseLocalhostClustering()
-            .UseMongoDBClient(sp =>
-                MongoClientSettings.FromConnectionString("mongodb://localhost:27017/")
-            )
-            .UseDashboard();
-    })
-    .RunConsoleAsync();
-```
+### PipelineBuilder<TSource, TTarget>
 
+The main entry point for creating transformation pipelines.
+
+- `WithStep(string stepName)`: Creates a new transformation step
+- `Build()`: Builds the pipeline
+
+### TransformationStep<TSource, TTarget>
+
+Represents a single step in the transformation pipeline.
+
+- `Property(Expression<Func<TSource, object?>> sourceProperty, Expression<Func<TTarget, object?>> targetProperty)`: Maps a source property to a target property
+- `Transform(Action<TSource, TTarget> transformAction)`: Applies custom transformation logic
+
+### Pipeline<TSource, TTarget>
+
+The executable pipeline that performs the transformations.
+
+- `Exec(TSource source, TTarget target)`: Executes the transformation pipeline
+- `StepCount`: Gets the number of transformation steps
+- `StepNames`: Gets the names of all transformation steps
+
+## License
+
+This project is part of the Petl ETL library.

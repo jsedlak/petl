@@ -40,20 +40,11 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Publish Petl.EventSourcing
-        uses: brandedoutcast/publish-nuget@v2.5.2
-        with:
-          PROJECT_FILE_PATH: src/Petl.EventSourcing/Petl.EventSourcing.csproj
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+      - name: Test
+        run: dotnet test
 
-      - name: Publish Petl.EventSourcing.Orleans
+      - name: Publish Petl.Core
         uses: brandedoutcast/publish-nuget@v2.5.2
         with:
-          PROJECT_FILE_PATH: src/Petl.EventSourcing.Orleans/Petl.EventSourcing.Orleans.csproj
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-
-      - name: Publish Petl.EventSourcing.Providers.MongoDb
-        uses: brandedoutcast/publish-nuget@v2.5.2
-        with:
-          PROJECT_FILE_PATH: src/Petl.EventSourcing.Providers.MongoDb/Petl.EventSourcing.Providers.MongoDb.csproj
+          PROJECT_FILE_PATH: src/Petl.Core/Petl.Core.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}

@@ -7,9 +7,15 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Petl.Core</PackageId>
-    <Version>1.0.0</Version>
-    <Authors>Petl Team</Authors>
+    <Authors>John Sedlak</Authors>
     <Description>A Programmable ETL (Extract, Transform, Load) Library designed around using a fluent interface to transform data from inputs to outputs.</Description>
+		<AssemblyTitle>Petl</AssemblyTitle>
+		<AssemblyName>Petl.Core</AssemblyName>
+		<PackageTags>etl;transform;pipeline</PackageTags>
+    <PackageIconUrl>https://raw.githubusercontent.com/jsedlak/petl/refs/heads/main/img/icon.png</PackageIconUrl>
+		<PackageProjectUrl>https://github.com/jsedlak/petl</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/jsedlak/petl</RepositoryUrl>
+		<Version>1.0.0-beta</Version>
   </PropertyGroup>
 
 </Project>

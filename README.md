@@ -1,3 +1,9 @@
+<div style="text-align:center;">
+
+![Petl Icon](img/icon.png)
+
+</div>
+
 # Petl
 
 A Programmable ETL (Extract, Transform, Load) Library designed around using a fluent interface to transform data from inputs to outputs.

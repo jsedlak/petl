@@ -23,7 +23,7 @@ public static class PetlBuilderExtensions
         configure(pipelineBuilder);
         var pipeline = pipelineBuilder.Build();
 
-        builder.Services.AddSingleton(pipeline);
+        builder.Services.AddSingleton<IPipeline<TSource, TTarget>>(pipeline);
         return builder;
     }
 
@@ -45,7 +45,7 @@ public static class PetlBuilderExtensions
         configure(pipelineBuilder);
         var pipeline = pipelineBuilder.Build();
 
-        builder.Services.AddKeyedSingleton(name, pipeline);
+        builder.Services.AddKeyedSingleton<IPipeline<TSource, TTarget>>(name, pipeline);
         return builder;
     }
 
@@ -111,7 +111,7 @@ public static class PetlBuilderExtensions
         configure?.Invoke(pipelineBuilder);
         var pipeline = pipelineBuilder.Build();
 
-        builder.Services.AddSingleton(pipeline);
+        builder.Services.AddSingleton<IPipeline<TSource, TTarget>>(pipeline);
         return builder;
     }
 
@@ -185,7 +185,7 @@ public static class PetlBuilderExtensions
         configure?.Invoke(pipelineBuilder);
         var pipeline = pipelineBuilder.Build();
 
-        builder.Services.AddKeyedSingleton(name, pipeline);
+        builder.Services.AddKeyedSingleton<IPipeline<TSource, TTarget>>(name, pipeline);
         return builder;
     }
 }

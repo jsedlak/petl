@@ -203,6 +203,20 @@ public class PipelineTests
         Assert.IsTrue(stepNames.Contains("Step 2"));
     }
 
+    [TestMethod]
+    public void Pipeline_ShouldImplementIPipeline()
+    {
+        // Arrange
+        var builder = new PipelineBuilder<InputModel, OutputModel>();
+        builder.WithStep("Test");
+
+        // Act
+        var pipeline = builder.Build();
+
+        // Assert
+        Assert.IsInstanceOfType(pipeline, typeof(IPipeline<InputModel, OutputModel>));
+    }
+
     #region AutoMap Tests
 
     /// <summary>

@@ -81,7 +81,7 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetService<Pipeline<DITestSource, DITestTarget>>();
+        var resolvedPipeline = provider.GetService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -137,7 +137,7 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("TestPipeline");
+        var resolvedPipeline = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("TestPipeline");
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -161,8 +161,8 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var pipeline1 = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("Pipeline1");
-        var pipeline2 = provider.GetKeyedService<Pipeline<DITestSource, DifferentTarget>>("Pipeline2");
+        var pipeline1 = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("Pipeline1");
+        var pipeline2 = provider.GetKeyedService<IPipeline<DITestSource, DifferentTarget>>("Pipeline2");
 
         // Assert
         Assert.IsNotNull(pipeline1);
@@ -184,7 +184,7 @@ public class DependencyInjectionTests
             .WithAutoMapping<DITestSource, DITestTarget>();
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetService<Pipeline<DITestSource, DITestTarget>>();
+        var resolvedPipeline = provider.GetService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -210,7 +210,7 @@ public class DependencyInjectionTests
             .WithAutoMapping<DITestSource, DITestTarget>("AutoMapper");
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("AutoMapper");
+        var resolvedPipeline = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("AutoMapper");
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -233,7 +233,7 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetService<Pipeline<DITestSource, DITestTarget>>();
+        var resolvedPipeline = provider.GetService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -258,7 +258,7 @@ public class DependencyInjectionTests
             .WithAutoMapping<DITestSource, DITestTarget>("FilteredMapper", (source, target, value) => value != null);
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("FilteredMapper");
+        var resolvedPipeline = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("FilteredMapper");
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -279,7 +279,7 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetService<Pipeline<DITestSource, DITestTarget>>();
+        var resolvedPipeline = provider.GetService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -308,7 +308,7 @@ public class DependencyInjectionTests
             });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("CustomMapper");
+        var resolvedPipeline = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("CustomMapper");
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -332,7 +332,7 @@ public class DependencyInjectionTests
                 });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetService<Pipeline<DITestSource, DITestTarget>>();
+        var resolvedPipeline = provider.GetService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -363,7 +363,7 @@ public class DependencyInjectionTests
                 });
 
         var provider = services.BuildServiceProvider();
-        var resolvedPipeline = provider.GetKeyedService<Pipeline<DITestSource, DITestTarget>>("FullMapper");
+        var resolvedPipeline = provider.GetKeyedService<IPipeline<DITestSource, DITestTarget>>("FullMapper");
 
         // Assert
         Assert.IsNotNull(resolvedPipeline);
@@ -395,7 +395,7 @@ public class DependencyInjectionTests
         var provider = services.BuildServiceProvider();
 
         // Act
-        var pipeline = provider.GetRequiredService<Pipeline<DITestSource, DITestTarget>>();
+        var pipeline = provider.GetRequiredService<IPipeline<DITestSource, DITestTarget>>();
 
         // Assert
         Assert.IsNotNull(pipeline);
@@ -422,7 +422,7 @@ public class DependencyInjectionTests
         var provider = services.BuildServiceProvider();
 
         // Act
-        var pipeline = provider.GetRequiredKeyedService<Pipeline<DITestSource, DITestTarget>>("KeyedPipeline");
+        var pipeline = provider.GetRequiredKeyedService<IPipeline<DITestSource, DITestTarget>>("KeyedPipeline");
 
         // Assert
         Assert.IsNotNull(pipeline);

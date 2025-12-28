@@ -123,12 +123,14 @@ builder.Services.AddPetl()
 
 ### Inject and Use
 
+Pipelines are registered as `IPipeline<TSource, TTarget>` for better testability and following the Dependency Inversion Principle:
+
 ```csharp
 public class UserService
 {
-    private readonly Pipeline<UserDto, UserViewModel> _pipeline;
+    private readonly IPipeline<UserDto, UserViewModel> _pipeline;
 
-    public UserService(Pipeline<UserDto, UserViewModel> pipeline)
+    public UserService(IPipeline<UserDto, UserViewModel> pipeline)
     {
         _pipeline = pipeline;
     }
@@ -185,8 +187,8 @@ Inject with `[FromKeyedServices]`:
 public class UserService
 {
     public UserService(
-        [FromKeyedServices("Summary")] Pipeline<UserDto, UserViewModel> summaryPipeline,
-        [FromKeyedServices("Full")] Pipeline<UserDto, UserViewModel> fullPipeline)
+        [FromKeyedServices("Summary")] IPipeline<UserDto, UserViewModel> summaryPipeline,
+        [FromKeyedServices("Full")] IPipeline<UserDto, UserViewModel> fullPipeline)
     {
         // Use different pipelines for different scenarios
     }
@@ -250,9 +252,19 @@ Represents a single step in the transformation pipeline.
 | `Property(...)` | Maps a source property to a target property |
 | `Transform(Action<TSource, TTarget> transformAction)` | Applies custom transformation logic |
 
+### IPipeline<TSource, TTarget>
+
+Interface representing a transformation pipeline. Use this for dependency injection.
+
+| Property/Method | Description |
+|-----------------|-------------|
+| `Exec(TSource source, TTarget target)` | Executes the transformation pipeline |
+| `StepCount` | Gets the number of transformation steps |
+| `StepNames` | Gets the names of all transformation steps |
+
 ### Pipeline<TSource, TTarget>
 
-The executable pipeline that performs the transformations.
+The concrete implementation of `IPipeline<TSource, TTarget>`.
 
 | Property/Method | Description |
 |-----------------|-------------|

@@ -5,7 +5,7 @@ namespace Petl;
 /// </summary>
 /// <typeparam name="TSource">The source type</typeparam>
 /// <typeparam name="TTarget">The target type</typeparam>
-public class Pipeline<TSource, TTarget>
+public class Pipeline<TSource, TTarget> : IPipeline<TSource, TTarget>
 {
     private readonly List<TransformationStep<TSource, TTarget>> _steps;
 

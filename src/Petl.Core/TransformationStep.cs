@@ -48,6 +48,15 @@ public class TransformationStep<TSource, TTarget>
     }
 
     /// <summary>
+    /// Adds an existing transformation step to this step (internal use)
+    /// </summary>
+    /// <param name="transformation">The transformation to add</param>
+    internal void AddTransformation(ITransformationStep transformation)
+    {
+        _transformations.Add(transformation);
+    }
+
+    /// <summary>
     /// Executes all transformations in this step
     /// </summary>
     /// <param name="source">The source object</param>

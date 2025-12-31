@@ -11,9 +11,10 @@ A Programmable ETL (Extract, Transform, Load) Library designed around using a fl
 ## Features
 
 - **Fluent Interface**: Easy-to-use builder pattern for creating transformation pipelines
+- **Async-First**: All pipeline operations are async with full cancellation token support
 - **AutoMap**: Automatically map matching properties between source and target with zero configuration
 - **Property Transformations**: Simple type-to-type data copying between properties
-- **Custom Transformations**: Support for custom transformation logic with callback handlers
+- **Custom Transformations**: Support for both sync and async transformation logic
 - **Pipeline Steps**: Organize transformations into logical steps
 - **Dependency Injection**: First-class support for ASP.NET Core and Microsoft.Extensions.DependencyInjection
 - **Type Safety**: Full generic type support for compile-time safety
@@ -55,7 +56,7 @@ var pipeline = new PipelineBuilder<UserDto, UserViewModel>()
 var dto = new UserDto { Name = "John", Age = 30, Email = "john@example.com" };
 var viewModel = new UserViewModel();
 
-pipeline.Exec(dto, viewModel);
+await pipeline.Exec(dto, viewModel);
 // viewModel now has all values from dto
 ```
 
@@ -67,10 +68,13 @@ Combine automatic mapping with custom logic:
 var pipeline = new PipelineBuilder<UserDto, UserViewModel>()
     .WithAutoMapStep()
     .WithStep("Post-Processing")
-        .Transform((source, target) => {
+        .Transform((source, target) =>
+        {
             target.Name = target.Name.ToUpper();
         })
     .Build();
+
+await pipeline.Exec(dto, viewModel);
 ```
 
 ### AutoMap with Filtering
@@ -79,10 +83,13 @@ Control which values get copied using a filter callback:
 
 ```csharp
 var pipeline = new PipelineBuilder<UserDto, UserViewModel>()
-    .WithAutoMapStep((source, target, value) => {
+    .WithAutoMapStep((source, target, value) =>
+    {
         // Only copy non-null, non-empty values
         if (value is string str)
+        {
             return !string.IsNullOrEmpty(str);
+        }
         return value != null;
     })
     .Build();
@@ -99,12 +106,47 @@ builder
     .WithStep("Transform User Data")
         .Property(x => x.FirstName, y => y.FullName)
         .Property(x => x.BirthYear, y => y.Age)
-        .Transform((source, target) => {
+        .Transform((source, target) =>
+        {
             target.DisplayName = $"{source.FirstName} ({source.Age})";
         });
 
 var pipeline = builder.Build();
+await pipeline.Exec(input, output);
 ```
+
+### Async Transformations
+
+The `Transform` method seamlessly handles both sync and async delegates - just write your lambda naturally:
+
+```csharp
+var pipeline = new PipelineBuilder<UserDto, UserViewModel>()
+    .WithAutoMapStep()
+    .WithStep("Process")
+        // Sync - just works
+        .Transform((source, target) =>
+        {
+            target.Name = source.Name.Trim();
+        })
+
+        // Async - just works
+        .Transform(async (source, target) =>
+        {
+            target.Details = await userService.GetDetailsAsync(source.Id);
+        })
+
+        // Async with cancellation - just works
+        .Transform(async (source, target, cancellationToken) =>
+        {
+            target.Extra = await api.FetchAsync(source.Id, cancellationToken);
+        })
+    .Build();
+
+// Always await Exec
+await pipeline.Exec(dto, viewModel, cancellationToken);
+```
+
+All three styles can be mixed freely in the same step. The pipeline handles them uniformly.
 
 ## Dependency Injection
 
@@ -135,10 +177,10 @@ public class UserService
         _pipeline = pipeline;
     }
 
-    public UserViewModel ToViewModel(UserDto dto)
+    public async Task<UserViewModel> ToViewModelAsync(UserDto dto, CancellationToken ct = default)
     {
         var viewModel = new UserViewModel();
-        _pipeline.Exec(dto, viewModel);
+        await _pipeline.Exec(dto, viewModel, ct);
         return viewModel;
     }
 }
@@ -160,7 +202,10 @@ builder.Services.AddPetl()
     .WithAutoMapping<UserDto, UserViewModel>(pipeline =>
     {
         pipeline.WithStep("Normalize")
-            .Transform((source, target) => target.Email = target.Email.ToLower());
+            .Transform((source, target) =>
+            {
+                target.Email = target.Email.ToLower();
+            });
     });
 ```
 
@@ -208,7 +253,10 @@ builder.Services.AddPetl()
     // Auto-mapping with additional steps
     .WithAutoMapping<SourceC, TargetC>(pipeline =>
     {
-        pipeline.WithStep("Extra").Transform((s, t) => t.Processed = true);
+        pipeline.WithStep("Extra").Transform((s, t) =>
+        {
+            t.Processed = true;
+        });
     })
     
     // Keyed auto-mapping with filter and additional steps
@@ -218,7 +266,10 @@ builder.Services.AddPetl()
         configure: pipeline =>
         {
             pipeline.WithStep("Finalize")
-                .Transform((s, t) => t.Name = t.Name.Trim());
+                .Transform((s, t) =>
+                {
+                    t.Name = t.Name.Trim();
+                });
         })
     
     // Custom pipeline
@@ -240,7 +291,7 @@ The main entry point for creating transformation pipelines.
 |--------|-------------|
 | `WithStep(string stepName)` | Creates a new transformation step |
 | `WithAutoMapStep(string stepName = "AutoMap")` | Auto-maps all matching properties |
-| `WithAutoMapStep(Func<TSource, TTarget, object?, bool> filter, string stepName = "AutoMap")` | Auto-maps with a filter callback |
+| `WithAutoMapStep(Func<...> filter, string stepName = "AutoMap")` | Auto-maps with a filter callback |
 | `Build()` | Builds the pipeline |
 
 ### TransformationStep<TSource, TTarget>
@@ -250,7 +301,9 @@ Represents a single step in the transformation pipeline.
 | Method | Description |
 |--------|-------------|
 | `Property(...)` | Maps a source property to a target property |
-| `Transform(Action<TSource, TTarget> transformAction)` | Applies custom transformation logic |
+| `Transform(Action<TSource, TTarget>)` | Adds a sync transformation |
+| `Transform(Func<TSource, TTarget, Task>)` | Adds an async transformation |
+| `Transform(Func<TSource, TTarget, CancellationToken, Task>)` | Adds an async transformation with cancellation support |
 
 ### IPipeline<TSource, TTarget>
 
@@ -258,7 +311,7 @@ Interface representing a transformation pipeline. Use this for dependency inject
 
 | Property/Method | Description |
 |-----------------|-------------|
-| `Exec(TSource source, TTarget target)` | Executes the transformation pipeline |
+| `Task Exec(TSource, TTarget, CancellationToken)` | Executes the transformation pipeline |
 | `StepCount` | Gets the number of transformation steps |
 | `StepNames` | Gets the names of all transformation steps |
 
@@ -268,7 +321,7 @@ The concrete implementation of `IPipeline<TSource, TTarget>`.
 
 | Property/Method | Description |
 |-----------------|-------------|
-| `Exec(TSource source, TTarget target)` | Executes the transformation pipeline |
+| `Task Exec(TSource, TTarget, CancellationToken)` | Executes the transformation pipeline |
 | `StepCount` | Gets the number of transformation steps |
 | `StepNames` | Gets the names of all transformation steps |
 

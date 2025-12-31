@@ -7,7 +7,7 @@ namespace Petl;
 /// </summary>
 /// <typeparam name="TSource">The source type</typeparam>
 /// <typeparam name="TTarget">The target type</typeparam>
-public class TransformationStep<TSource, TTarget>
+public class TransformationStep<TSource, TTarget> : ITransformationStepContainer<TSource, TTarget>
 {
     private readonly string _stepName;
     private readonly List<ITransformationStep> _transformations;
@@ -37,11 +37,34 @@ public class TransformationStep<TSource, TTarget>
     }
 
     /// <summary>
-    /// Adds a custom transformation to this step
+    /// Adds a synchronous custom transformation to this step
     /// </summary>
-    /// <param name="transformAction">The transformation action to execute</param>
+    /// <param name="transformAction">Sync transformation action</param>
     /// <returns>This transformation step for method chaining</returns>
     public TransformationStep<TSource, TTarget> Transform(Action<TSource, TTarget> transformAction)
+    {
+        _transformations.Add(new TransformTransformation<TSource, TTarget>(transformAction));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an asynchronous custom transformation to this step
+    /// </summary>
+    /// <param name="transformAction">Async transformation action</param>
+    /// <returns>This transformation step for method chaining</returns>
+    public TransformationStep<TSource, TTarget> Transform(Func<TSource, TTarget, Task> transformAction)
+    {
+        _transformations.Add(new TransformTransformation<TSource, TTarget>(transformAction));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds an asynchronous custom transformation with cancellation support to this step
+    /// </summary>
+    /// <param name="transformAction">Async transformation action with cancellation token</param>
+    /// <returns>This transformation step for method chaining</returns>
+    public TransformationStep<TSource, TTarget> Transform(
+        Func<TSource, TTarget, CancellationToken, Task> transformAction)
     {
         _transformations.Add(new TransformTransformation<TSource, TTarget>(transformAction));
         return this;
@@ -61,16 +84,24 @@ public class TransformationStep<TSource, TTarget>
     /// </summary>
     /// <param name="source">The source object</param>
     /// <param name="target">The target object</param>
-    internal void Execute(TSource source, TTarget target)
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    async Task ITransformationStepContainer<TSource, TTarget>.Execute(
+        TSource source, TTarget target, CancellationToken cancellationToken)
     {
         if (source == null)
+        {
             throw new ArgumentNullException(nameof(source));
+        }
+
         if (target == null)
+        {
             throw new ArgumentNullException(nameof(target));
+        }
 
         foreach (var transformation in _transformations)
         {
-            transformation.Execute(source, target);
+            await transformation.Execute(source, target, cancellationToken);
         }
     }
 

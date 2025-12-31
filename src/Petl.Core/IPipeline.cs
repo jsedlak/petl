@@ -12,7 +12,9 @@ public interface IPipeline<TSource, TTarget>
     /// </summary>
     /// <param name="source">The source object to transform from</param>
     /// <param name="target">The target object to transform to</param>
-    void Exec(TSource source, TTarget target);
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    Task Exec(TSource source, TTarget target, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the number of transformation steps in this pipeline
@@ -24,4 +26,3 @@ public interface IPipeline<TSource, TTarget>
     /// </summary>
     IEnumerable<string> StepNames { get; }
 }
-

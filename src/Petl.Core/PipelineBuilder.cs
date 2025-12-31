@@ -92,18 +92,24 @@ public class PipelineBuilder<TSource, TTarget>
     {
         // Exact match
         if (sourceType == targetType)
+        {
             return true;
+        }
 
         // Target is assignable from source (inheritance, interfaces)
         if (targetType.IsAssignableFrom(sourceType))
+        {
             return true;
+        }
 
         // Handle nullable to non-nullable and vice versa
         var underlyingSource = Nullable.GetUnderlyingType(sourceType) ?? sourceType;
         var underlyingTarget = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
         if (underlyingSource == underlyingTarget)
+        {
             return true;
+        }
 
         return false;
     }
@@ -114,6 +120,7 @@ public class PipelineBuilder<TSource, TTarget>
     /// <returns>A pipeline that can execute transformations</returns>
     public Pipeline<TSource, TTarget> Build()
     {
-        return new Pipeline<TSource, TTarget>(_steps);
+        return new Pipeline<TSource, TTarget>(
+            _steps.Cast<ITransformationStepContainer<TSource, TTarget>>());
     }
 }

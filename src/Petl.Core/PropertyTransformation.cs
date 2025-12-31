@@ -47,8 +47,12 @@ public class PropertyTransformation<TSource, TTarget> : ITransformationStep
     /// </summary>
     /// <param name="source">The source object</param>
     /// <param name="target">The target object</param>
-    public void Execute(object source, object target)
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    public Task Execute(object source, object target, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (source is TSource sourceObj && target is TTarget targetObj)
         {
             var value = _sourceProperty(sourceObj);
@@ -107,5 +111,7 @@ public class PropertyTransformation<TSource, TTarget> : ITransformationStep
                 }
             }
         }
+
+        return Task.CompletedTask;
     }
 }

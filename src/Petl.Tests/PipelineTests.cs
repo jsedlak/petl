@@ -78,7 +78,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void Pipeline_Exec_ShouldExecutePropertyTransformation()
+    public async Task Pipeline_Exec_ShouldExecutePropertyTransformation()
     {
         // Arrange
         var builder = new PipelineBuilder<InputModel, OutputModel>();
@@ -91,20 +91,21 @@ public class PipelineTests
         var output = new OutputModel();
 
         // Act
-        pipeline.Exec(input, output);
+        await pipeline.Exec(input, output);
 
         // Assert
         Assert.AreEqual("Hello World", output.TargetProperty);
     }
 
     [TestMethod]
-    public void Pipeline_Exec_ShouldExecuteCustomTransform()
+    public async Task Pipeline_Exec_ShouldExecuteCustomTransform()
     {
         // Arrange
         var builder = new PipelineBuilder<InputModel, OutputModel>();
         builder
             .WithStep("Custom Transform")
-                .Transform((source, target) => {
+                .Transform((source, target) =>
+                {
                     target.SomeProperty = source.SomeProperty.ToString();
                 });
 
@@ -113,29 +114,31 @@ public class PipelineTests
         var output = new OutputModel();
 
         // Act
-        pipeline.Exec(input, output);
+        await pipeline.Exec(input, output);
 
         // Assert
         Assert.AreEqual("42", output.SomeProperty);
     }
 
     [TestMethod]
-    public void Pipeline_Exec_ShouldExecuteMultipleSteps()
+    public async Task Pipeline_Exec_ShouldExecuteMultipleSteps()
     {
         // Arrange
         var builder = new PipelineBuilder<TestInput, TestOutput>();
         
-        var step1 = builder
+        builder
             .WithStep("Basic Property Mapping")
                 .Property(x => x.Name, y => y.FullName)
                 .Property(x => x.Age, y => y.YearsOld);
 
-        var step2 = builder
+        builder
             .WithStep("Custom Transformations")
-                .Transform((source, target) => {
+                .Transform((source, target) =>
+                {
                     target.BirthYear = source.BirthDate.Year.ToString();
                 })
-                .Transform((source, target) => {
+                .Transform((source, target) =>
+                {
                     target.Description = $"{source.Name} is {source.Age} years old, born in {source.BirthDate.Year}";
                 });
 
@@ -149,7 +152,7 @@ public class PipelineTests
         var output = new TestOutput();
 
         // Act
-        pipeline.Exec(input, output);
+        await pipeline.Exec(input, output);
 
         // Assert
         Assert.AreEqual("John Doe", output.FullName);
@@ -160,7 +163,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void Pipeline_Exec_WithNullSource_ShouldThrowArgumentNullException()
+    public async Task Pipeline_Exec_WithNullSource_ShouldThrowArgumentNullException()
     {
         // Arrange
         var builder = new PipelineBuilder<InputModel, OutputModel>();
@@ -169,11 +172,11 @@ public class PipelineTests
         var output = new OutputModel();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentNullException>(() => pipeline.Exec(null!, output));
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => pipeline.Exec(null!, output));
     }
 
     [TestMethod]
-    public void Pipeline_Exec_WithNullTarget_ShouldThrowArgumentNullException()
+    public async Task Pipeline_Exec_WithNullTarget_ShouldThrowArgumentNullException()
     {
         // Arrange
         var builder = new PipelineBuilder<InputModel, OutputModel>();
@@ -182,7 +185,7 @@ public class PipelineTests
         var input = new InputModel();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentNullException>(() => pipeline.Exec(input, null!));
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => pipeline.Exec(input, null!));
     }
 
     [TestMethod]
@@ -216,6 +219,93 @@ public class PipelineTests
         // Assert
         Assert.IsInstanceOfType(pipeline, typeof(IPipeline<InputModel, OutputModel>));
     }
+
+    #region Async Transform Tests
+
+    [TestMethod]
+    public async Task Pipeline_Exec_ShouldExecuteAsyncTransformation()
+    {
+        // Arrange
+        var builder = new PipelineBuilder<TestInput, TestOutput>();
+        builder.WithStep("Async Step")
+            .Transform(async (source, target) =>
+            {
+                await Task.Delay(10);
+                target.FullName = source.Name.ToUpper();
+            });
+
+        var pipeline = builder.Build();
+        var input = new TestInput { Name = "test" };
+        var output = new TestOutput();
+
+        // Act
+        await pipeline.Exec(input, output);
+
+        // Assert
+        Assert.AreEqual("TEST", output.FullName);
+    }
+
+    [TestMethod]
+    public async Task Pipeline_Exec_ShouldSupportCancellation()
+    {
+        // Arrange
+        var builder = new PipelineBuilder<TestInput, TestOutput>();
+        builder.WithStep("Cancellable Step")
+            .Transform(async (source, target, ct) =>
+            {
+                await Task.Delay(10000, ct);
+                target.FullName = source.Name;
+            });
+
+        var pipeline = builder.Build();
+        var input = new TestInput { Name = "test" };
+        var output = new TestOutput();
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<TaskCanceledException>(
+            () => pipeline.Exec(input, output, cts.Token));
+    }
+
+    [TestMethod]
+    public async Task Pipeline_Exec_ShouldExecuteMixedSyncAndAsyncTransformations()
+    {
+        // Arrange
+        var builder = new PipelineBuilder<TestInput, TestOutput>();
+        builder.WithStep("Mixed Step")
+            // Sync - no async keyword
+            .Transform((source, target) =>
+            {
+                target.FullName = source.Name;
+            })
+            // Async without cancellation token
+            .Transform(async (source, target) =>
+            {
+                await Task.Delay(5);
+                target.BirthYear = "2000";
+            })
+            // Async with cancellation token
+            .Transform(async (source, target, ct) =>
+            {
+                await Task.Delay(10, ct);
+                target.Description = $"Processed: {target.FullName}";
+            });
+
+        var pipeline = builder.Build();
+        var input = new TestInput { Name = "Test" };
+        var output = new TestOutput();
+
+        // Act
+        await pipeline.Exec(input, output);
+
+        // Assert
+        Assert.AreEqual("Test", output.FullName);
+        Assert.AreEqual("2000", output.BirthYear);
+        Assert.AreEqual("Processed: Test", output.Description);
+    }
+
+    #endregion
 
     #region AutoMap Tests
 
@@ -304,7 +394,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldMapMatchingProperties()
+    public async Task AutoMap_ShouldMapMatchingProperties()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, AutoMapTarget>();
@@ -322,7 +412,7 @@ public class PipelineTests
         var target = new AutoMapTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("John Doe", target.Name);
@@ -333,7 +423,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldOnlyMapMatchingProperties()
+    public async Task AutoMap_ShouldOnlyMapMatchingProperties()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, PartialMatchTarget>();
@@ -351,7 +441,7 @@ public class PipelineTests
         var target = new PartialMatchTarget { Address = "Original Address" };
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("Jane Doe", target.Name);
@@ -360,7 +450,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldNotMapTypeMismatchedProperties()
+    public async Task AutoMap_ShouldNotMapTypeMismatchedProperties()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, TypeMismatchTarget>();
@@ -376,7 +466,7 @@ public class PipelineTests
         var target = new TypeMismatchTarget { Age = "Original Age" };
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("Bob Smith", target.Name);
@@ -385,7 +475,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldMapNullableProperties()
+    public async Task AutoMap_ShouldMapNullableProperties()
     {
         // Arrange
         var builder = new PipelineBuilder<NullableSource, NullableTarget>();
@@ -402,7 +492,7 @@ public class PipelineTests
         var target = new NullableTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual(42, target.NullableInt);
@@ -412,7 +502,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldHandleNullValues()
+    public async Task AutoMap_ShouldHandleNullValues()
     {
         // Arrange
         var builder = new PipelineBuilder<NullableSource, NullableTarget>();
@@ -434,7 +524,7 @@ public class PipelineTests
         };
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.IsNull(target.NullableInt);
@@ -444,7 +534,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldMapNullableToNonNullable()
+    public async Task AutoMap_ShouldMapNullableToNonNullable()
     {
         // Arrange
         var builder = new PipelineBuilder<NullableSource, NullableToNonNullableTarget>();
@@ -458,7 +548,7 @@ public class PipelineTests
         var target = new NullableToNonNullableTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual(42, target.NullableInt);
@@ -495,7 +585,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_ShouldWorkWithOtherSteps()
+    public async Task AutoMap_ShouldWorkWithOtherSteps()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, AutoMapTarget>();
@@ -511,7 +601,7 @@ public class PipelineTests
         var target = new AutoMapTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("JOHN DOE", target.Name); // Modified by custom step
@@ -533,7 +623,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_WithNoMatchingProperties_ShouldNotChangeTarget()
+    public async Task AutoMap_WithNoMatchingProperties_ShouldNotChangeTarget()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, NoMatchTarget>();
@@ -554,7 +644,7 @@ public class PipelineTests
         };
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("Original", target.FirstName);
@@ -563,7 +653,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_WithFilter_ShouldApplyFilter()
+    public async Task AutoMap_WithFilter_ShouldApplyFilter()
     {
         // Arrange
         var filterCalled = false;
@@ -579,14 +669,14 @@ public class PipelineTests
         var target = new AutoMapTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.IsTrue(filterCalled);
     }
 
     [TestMethod]
-    public void AutoMap_WithFilter_ShouldSkipWhenFilterReturnsFalse()
+    public async Task AutoMap_WithFilter_ShouldSkipWhenFilterReturnsFalse()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, AutoMapTarget>();
@@ -611,7 +701,7 @@ public class PipelineTests
         };
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert - all values should remain unchanged
         Assert.AreEqual("Original", target.Name);
@@ -620,7 +710,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_WithFilter_ShouldCopyWhenFilterReturnsTrue()
+    public async Task AutoMap_WithFilter_ShouldCopyWhenFilterReturnsTrue()
     {
         // Arrange
         var builder = new PipelineBuilder<AutoMapSource, AutoMapTarget>();
@@ -639,7 +729,7 @@ public class PipelineTests
         var target = new AutoMapTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.AreEqual("Test", target.Name);
@@ -647,7 +737,7 @@ public class PipelineTests
     }
 
     [TestMethod]
-    public void AutoMap_WithFilter_ShouldReceiveCorrectParameters()
+    public async Task AutoMap_WithFilter_ShouldReceiveCorrectParameters()
     {
         // Arrange
         AutoMapSource? capturedSource = null;
@@ -672,7 +762,7 @@ public class PipelineTests
         var target = new AutoMapTarget();
 
         // Act
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         // Assert
         Assert.IsNotNull(capturedSource);

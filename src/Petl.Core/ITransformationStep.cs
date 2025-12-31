@@ -10,5 +10,7 @@ public interface ITransformationStep
     /// </summary>
     /// <param name="source">The input object</param>
     /// <param name="target">The output object</param>
-    void Execute(object source, object target);
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    Task Execute(object source, object target, CancellationToken cancellationToken = default);
 }

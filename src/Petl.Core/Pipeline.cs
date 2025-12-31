@@ -7,15 +7,15 @@ namespace Petl;
 /// <typeparam name="TTarget">The target type</typeparam>
 public class Pipeline<TSource, TTarget> : IPipeline<TSource, TTarget>
 {
-    private readonly List<TransformationStep<TSource, TTarget>> _steps;
+    private readonly List<ITransformationStepContainer<TSource, TTarget>> _steps;
 
     /// <summary>
     /// Initializes a new instance of the Pipeline class
     /// </summary>
     /// <param name="steps">The transformation steps to execute</param>
-    internal Pipeline(List<TransformationStep<TSource, TTarget>> steps)
+    internal Pipeline(IEnumerable<ITransformationStepContainer<TSource, TTarget>> steps)
     {
-        _steps = steps ?? throw new ArgumentNullException(nameof(steps));
+        _steps = steps?.ToList() ?? throw new ArgumentNullException(nameof(steps));
     }
 
     /// <summary>
@@ -23,16 +23,23 @@ public class Pipeline<TSource, TTarget> : IPipeline<TSource, TTarget>
     /// </summary>
     /// <param name="source">The source object to transform from</param>
     /// <param name="target">The target object to transform to</param>
-    public void Exec(TSource source, TTarget target)
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    public async Task Exec(TSource source, TTarget target, CancellationToken cancellationToken = default)
     {
         if (source == null)
+        {
             throw new ArgumentNullException(nameof(source));
+        }
+
         if (target == null)
+        {
             throw new ArgumentNullException(nameof(target));
+        }
 
         foreach (var step in _steps)
         {
-            step.Execute(source, target);
+            await step.Execute(source, target, cancellationToken);
         }
     }
 

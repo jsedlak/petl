@@ -31,10 +31,16 @@ internal class AutoMapTransformation<TSource, TTarget> : ITransformationStep
     /// </summary>
     /// <param name="source">The source object</param>
     /// <param name="target">The target object</param>
-    public void Execute(object source, object target)
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A task representing the operation</returns>
+    public Task Execute(object source, object target, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (source is not TSource typedSource || target is not TTarget typedTarget)
-            return;
+        {
+            return Task.CompletedTask;
+        }
 
         foreach (var (sourceProp, targetProp) in _propertyMappings)
         {
@@ -42,11 +48,15 @@ internal class AutoMapTransformation<TSource, TTarget> : ITransformationStep
 
             // Apply filter if provided
             if (_filter != null && !_filter(typedSource, typedTarget, value))
+            {
                 continue;
+            }
 
             // Copy value to target
             SetTargetValue(typedTarget, targetProp, value);
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -95,4 +105,3 @@ internal class AutoMapTransformation<TSource, TTarget> : ITransformationStep
         }
     }
 }
-

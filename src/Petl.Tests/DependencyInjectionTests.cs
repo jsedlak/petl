@@ -174,7 +174,7 @@ public class DependencyInjectionTests
     #region WithAutoMapping Tests
 
     [TestMethod]
-    public void WithAutoMapping_ShouldRegisterAutoMappedPipeline()
+    public async Task WithAutoMapping_ShouldRegisterAutoMappedPipeline()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -192,7 +192,7 @@ public class DependencyInjectionTests
         // Verify it works
         var source = new DITestSource { Name = "Test", Age = 25, Email = "test@example.com" };
         var target = new DITestTarget();
-        resolvedPipeline.Exec(source, target);
+        await resolvedPipeline.Exec(source, target);
 
         Assert.AreEqual("Test", target.Name);
         Assert.AreEqual(25, target.Age);
@@ -217,7 +217,7 @@ public class DependencyInjectionTests
     }
 
     [TestMethod]
-    public void WithAutoMapping_WithFilter_ShouldApplyFilter()
+    public async Task WithAutoMapping_WithFilter_ShouldApplyFilter()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -228,7 +228,9 @@ public class DependencyInjectionTests
             {
                 // Only copy non-empty strings
                 if (value is string str)
+                {
                     return !string.IsNullOrEmpty(str);
+                }
                 return true;
             });
 
@@ -240,7 +242,7 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "Test", Age = 25, Email = "" };
         var target = new DITestTarget { Email = "original@example.com" };
-        resolvedPipeline.Exec(source, target);
+        await resolvedPipeline.Exec(source, target);
 
         Assert.AreEqual("Test", target.Name);
         Assert.AreEqual(25, target.Age);
@@ -265,7 +267,7 @@ public class DependencyInjectionTests
     }
 
     [TestMethod]
-    public void WithAutoMapping_WithConfigure_ShouldAddAdditionalSteps()
+    public async Task WithAutoMapping_WithConfigure_ShouldAddAdditionalSteps()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -275,7 +277,10 @@ public class DependencyInjectionTests
             .WithAutoMapping<DITestSource, DITestTarget>(pipeline =>
             {
                 pipeline.WithStep("PostProcessing")
-                    .Transform((source, target) => target.Name = target.Name.ToUpper());
+                    .Transform((source, target) =>
+                    {
+                        target.Name = target.Name.ToUpper();
+                    });
             });
 
         var provider = services.BuildServiceProvider();
@@ -287,7 +292,7 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "test", Age = 25 };
         var target = new DITestTarget();
-        resolvedPipeline.Exec(source, target);
+        await resolvedPipeline.Exec(source, target);
 
         Assert.AreEqual("TEST", target.Name); // Transformed to uppercase
         Assert.AreEqual(25, target.Age);
@@ -304,7 +309,10 @@ public class DependencyInjectionTests
             .WithAutoMapping<DITestSource, DITestTarget>("CustomMapper", pipeline =>
             {
                 pipeline.WithStep("Extra")
-                    .Transform((source, target) => target.Email = target.Email.ToLower());
+                    .Transform((source, target) =>
+                    {
+                        target.Email = target.Email.ToLower();
+                    });
             });
 
         var provider = services.BuildServiceProvider();
@@ -316,7 +324,7 @@ public class DependencyInjectionTests
     }
 
     [TestMethod]
-    public void WithAutoMapping_WithFilterAndConfigure_ShouldWork()
+    public async Task WithAutoMapping_WithFilterAndConfigure_ShouldWork()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -328,7 +336,10 @@ public class DependencyInjectionTests
                 configure: pipeline =>
                 {
                     pipeline.WithStep("Extra")
-                        .Transform((source, target) => target.Name = target.Name + "!");
+                        .Transform((source, target) =>
+                        {
+                            target.Name = target.Name + "!";
+                        });
                 });
 
         var provider = services.BuildServiceProvider();
@@ -340,13 +351,13 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "Test" };
         var target = new DITestTarget();
-        resolvedPipeline.Exec(source, target);
+        await resolvedPipeline.Exec(source, target);
 
         Assert.AreEqual("Test!", target.Name);
     }
 
     [TestMethod]
-    public void WithAutoMapping_WithAllOptions_ShouldWork()
+    public async Task WithAutoMapping_WithAllOptions_ShouldWork()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -359,7 +370,10 @@ public class DependencyInjectionTests
                 configure: pipeline =>
                 {
                     pipeline.WithStep("Transform")
-                        .Transform((source, target) => target.Name = target.Name.ToUpper());
+                        .Transform((source, target) =>
+                        {
+                            target.Name = target.Name.ToUpper();
+                        });
                 });
 
         var provider = services.BuildServiceProvider();
@@ -371,7 +385,7 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "test", Age = 30 };
         var target = new DITestTarget();
-        resolvedPipeline.Exec(source, target);
+        await resolvedPipeline.Exec(source, target);
 
         Assert.AreEqual("TEST", target.Name);
         Assert.AreEqual(30, target.Age);
@@ -382,7 +396,7 @@ public class DependencyInjectionTests
     #region Integration Tests
 
     [TestMethod]
-    public void Pipeline_ShouldBeResolvable_FromServiceProvider()
+    public async Task Pipeline_ShouldBeResolvable_FromServiceProvider()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -402,14 +416,14 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "Integration", Age = 42 };
         var target = new DITestTarget();
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         Assert.AreEqual("Integration", target.Name);
         Assert.AreEqual(42, target.Age);
     }
 
     [TestMethod]
-    public void KeyedPipeline_ShouldBeResolvable_WithKey()
+    public async Task KeyedPipeline_ShouldBeResolvable_WithKey()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -429,7 +443,7 @@ public class DependencyInjectionTests
 
         var source = new DITestSource { Name = "Keyed", Age = 99 };
         var target = new DITestTarget();
-        pipeline.Exec(source, target);
+        await pipeline.Exec(source, target);
 
         Assert.AreEqual("Keyed", target.Name);
         Assert.AreEqual(99, target.Age);
@@ -437,4 +451,3 @@ public class DependencyInjectionTests
 
     #endregion
 }
-

@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+All code blocks (while, if, for, foreach, etc) should always use { }.
